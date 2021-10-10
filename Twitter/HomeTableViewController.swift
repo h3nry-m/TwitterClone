@@ -17,6 +17,8 @@ class HomeTableViewController: UITableViewController {
     @IBAction func onLogout(_ sender: Any) {
         TwitterAPICaller.client?.logout()
         self.dismiss(animated: true, completion: nil)
+        // to get rid of the persistent storage after they've logged out
+        UserDefaults.standard.set(false, forKey: "userLoggedIn")
     }
     
     // MARK: - Table view data source
