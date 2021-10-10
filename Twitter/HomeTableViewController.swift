@@ -20,21 +20,23 @@ class HomeTableViewController: UITableViewController {
     // when screen is done loading for the first time
     override func viewDidLoad() {
         super.viewDidLoad()
-        loadTweet() // run loadtweets when screen is finished loading
+        loadTweets() // run loadtweets when screen is finished loading
         
         // to handle pull to refresh
         // want target to be self - this own screen
         // use # selector to pick function to redo. fix will auto add @obj function to the load tweet function
-        myRefreshControl.addTarget(self, action: #selector(loadTweet), for: .valueChanged)
+        myRefreshControl.addTarget(self, action: #selector(loadTweets), for: .valueChanged)
         tableView.refreshControl = myRefreshControl
     }
     
-    @objc func loadTweet() {
+    @objc func loadTweets() {
+        // will always be 20 from when you first start or pull to refresh
+        numberOfTweet = 20
         
         let myUrl = "https://api.twitter.com/1.1/statuses/home_timeline.json"
-        let myParams = ["count": 20]
+        let myParams = ["count": numberOfTweet]
         
-        TwitterAPICaller.client?.getDictionariesRequest(url: myUrl, parameters: myParams, success: { (tweets: [NSDictionary]) in
+        TwitterAPICaller.client?.getDictionariesRequest(url: myUrl, parameters: myParams as [String : Any], success: { (tweets: [NSDictionary]) in
             self.tweetArray.removeAll()
             for tweet in tweets {
                 self.tweetArray.append(tweet)
@@ -50,6 +52,40 @@ class HomeTableViewController: UITableViewController {
             print("Could not retrieve tweets!")
         })
     }
+    
+    // will handle the continuous scrolling
+    func loadMoreTweets(){
+        let myUrl = "https://api.twitter.com/1.1/statuses/home_timeline.json"
+        numberOfTweet = numberOfTweet + 20
+        let myParams = ["count": numberOfTweet]
+        TwitterAPICaller.client?.getDictionariesRequest(url: myUrl, parameters: myParams as [String : Any], success: { (tweets: [NSDictionary]) in
+            self.tweetArray.removeAll()
+            for tweet in tweets {
+                self.tweetArray.append(tweet)
+            }
+            
+            // reloads the data every time it makes a call to the API
+            self.tableView.reloadData()
+            
+            // will end the refreshing icon (necessary or else loading refresh stays)
+            self.myRefreshControl.endRefreshing()
+            
+        }, failure: { (Error) in
+            print("Could not retrieve tweets!")
+        })
+
+    }
+    
+    // for when a user gets to end of the screen, call load more tweets
+    override func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
+        if indexPath.row + 1 == tweetArray.count {
+            loadMoreTweets()
+        }
+    }
+    
+    
+    
+    
     
     
     
